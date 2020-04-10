@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
 from collections import defaultdict
+from datetime import datetime
 
 from utils.load import load_db_into_memory
 from utils.exception import *
@@ -61,10 +62,11 @@ class NaiveBinaryModel:
 
     def initialize(self):
         print('Loading model...')
+        now = datetime.now()
         self._load_charset()
         self._load_pinyin()
         self._load_relation()
-        print('Finished load model')
+        print('Finished load model, cost ', (datetime.now() - now).total_seconds(), 's')
 
     def _get_init_state(self, index):
         return {char: {0: self.char_to_likelihood[char]} for char in self.table[index]}

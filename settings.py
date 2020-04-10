@@ -1,5 +1,5 @@
 
 
-smooth = 1
-candidates = 100
+smooth = 0.8
+candidates = 10
 
