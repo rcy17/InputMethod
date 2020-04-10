@@ -1,5 +1,5 @@
 
 
 smooth = 0.8
-candidates = 10
+candidates = 15
 

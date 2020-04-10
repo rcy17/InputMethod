@@ -1,14 +1,12 @@
 from pathlib import Path
 
-from naive.train import train
-from naive.statistic import entry
 from naive.models import NaiveBinaryModel
 from utils import exception
 
 
 def main():
     model = NaiveBinaryModel('db.sqlite3')
-    for line in open('input/input.txt'):
+    for line in open('input/input2.txt'):
         try:
             print(model.predict(line))
         except exception.StrangePinyinError as e:

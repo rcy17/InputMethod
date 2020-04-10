@@ -40,9 +40,12 @@ def create_raw_table(connection: sqlite3.Connection):
 def read_charset(connection: sqlite3.Connection, path: Path):
     charset = open(str(path.joinpath('charset.txt')), encoding='gbk').read()
     if connection:
-        sql = 'INSERT INTO charset values (?, 0)'
-        connection.executemany(sql, charset)
-        connection.commit()
+        with connection:
+            sql = 'INSERT INTO charset values (?, 0)'
+            cursor = connection.cursor()
+            cursor.execute(sql, '^')
+            cursor.executemany(sql, charset)
+            cursor.execute(sql, '$')
         print('Finished charset initialization')
     return set(charset), {char: index + 1 for index, char in enumerate(charset)}
 

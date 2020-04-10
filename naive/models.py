@@ -3,7 +3,6 @@ from pathlib import Path
 from collections import defaultdict
 from datetime import datetime
 
-from utils.load import load_db_into_memory
 from utils.exception import *
 from naive.statistic import entry
 from settings import smooth, candidates
@@ -32,12 +31,12 @@ class NaiveBinaryModel:
         self.connection.close()
 
     def _load_charset(self):
-        sql = 'SELECT oid, * FROM charset ORDER BY oid'
+        sql = 'SELECT * FROM charset ORDER BY oid'
         data = self.connection.execute(sql).fetchall()
-        self.chars = ('', ) + tuple(each[1] for each in data)
-        self.char_to_count = {each[0]: each[2] for each in data}
-        total_char_count = sum(self.char_to_count.values())
-        self.char_to_likelihood = {k: v / total_char_count for k, v in self.char_to_count.items()}
+        self.chars = tuple(each[0] for each in data)
+        self.char_to_count = [each[1] for each in data]
+        total_char_count = sum(self.char_to_count)
+        self.char_to_likelihood = [count / total_char_count for count in self.char_to_count]
 
     def _load_pinyin(self):
         sql = 'SELECT oid, * FROM pinyin_set ORDER BY oid'
@@ -87,7 +86,7 @@ class NaiveBinaryModel:
     def predict(self, pinyin: str):
         states = []
         for each in pinyin.split():
-            index = self.pinyin_to_index.get(each)
+            index = self.pinyin_to_index.get(each.lower())
             if not index:
                 raise StrangePinyinError(each)
             states.append(self._get_next_state(states[-1], index) if states else self._get_init_state(index))
