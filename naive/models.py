@@ -15,6 +15,8 @@ class NaiveBinaryModel:
     def __init__(self, model_path='db.sqlite3'):
         if not Path(model_path).exists():
             try:
+                from sys import stderr
+                print('WARNING: no model file at', model_path, 'and try to build model')
                 entry('data', model_path)
             except Exception as e:
                 Path(model_path).unlink()
@@ -54,9 +56,6 @@ class NaiveBinaryModel:
                   'ORDER BY count DESC LIMIT %d' % (index, candidates)
             data = self.connection.execute(sql).fetchall()
             relation = dict(data)
-            # total = sum(relation.values())
-            # for each in relation:
-            #    relation[each] /= total
             self.relation[index] = relation
 
     def initialize(self):
@@ -67,11 +66,7 @@ class NaiveBinaryModel:
         self._load_relation()
         print('Finished load model, cost ', (datetime.now() - now).total_seconds(), 's')
 
-    def _get_init_state(self, index):
-        return {char: {0: self.char_to_likelihood[char]} for char in self.table[index]}
-
-    def _get_next_state(self, last_state, index):
-        state = {current: {} for current in self.table[index]}
+    def _update_next_state(self, last_state, state):
         for right in state:
             for left in last_state:
                 if not self.char_to_count[left]:
@@ -84,14 +79,17 @@ class NaiveBinaryModel:
         return state
 
     def predict(self, pinyin: str):
-        states = []
+        stop = len(self.chars) - 1  # for $
+        start = stop - 1            # for ^
+        states = [{start: {0: 1}}]
         for each in pinyin.split():
             index = self.pinyin_to_index.get(each.lower())
             if not index:
                 raise StrangePinyinError(each)
-            states.append(self._get_next_state(states[-1], index) if states else self._get_init_state(index))
-
-        result = [max(states[-1], key=lambda x: states[-1][x][0])]
+            states.append(self._update_next_state(states[-1], {current: {} for current in self.table[index]}))
+        end_state = self._update_next_state(states[-1], {stop: {}})[stop]
+        end_state.pop(0)
+        result = [max(end_state, key=lambda x: end_state[x])]
         for state in states[:0:-1]:
             result.append(max(filter(lambda x: x, state[result[-1]]), key=lambda x: state[result[-1]][x]))
-        return ''.join(map(lambda x: self.chars[x], reversed(result)))
+        return ''.join(map(lambda x: self.chars[x], reversed(result[:-1])))

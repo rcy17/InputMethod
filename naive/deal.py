@@ -4,8 +4,8 @@ def deal_text_naive(text: str, char_to_index: dict, record: dict, binary_record:
     left = start
     for right in text:
         right = char_to_index.get(right, start)
+        record[right] += 1
         if right != start:
-            record[right] += 1
             binary_record[left][right] += 1
         elif left != start:
             binary_record[left][stop] += 1
