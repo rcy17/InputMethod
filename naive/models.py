@@ -33,9 +33,9 @@ class NaiveBinaryModel:
     def _load_charset(self):
         sql = 'SELECT * FROM charset ORDER BY oid'
         data = self.connection.execute(sql).fetchall()
-        self.chars = tuple(each[0] for each in data)
-        self.char_to_count = [each[1] for each in data]
-        total_char_count = sum(self.char_to_count)
+        self.chars = ('', ) + tuple(each[0] for each in data)
+        self.char_to_count = (0, ) + tuple(each[1] for each in data)
+        total_char_count = sum(self.char_to_count[:-2])
         self.char_to_likelihood = [count / total_char_count for count in self.char_to_count]
 
     def _load_pinyin(self):
@@ -48,9 +48,9 @@ class NaiveBinaryModel:
             self.table[index] = sum(data, ())
 
     def _load_relation(self):
-        for index in self.char_to_likelihood:
+        for index in range(1, 1 + len(self.chars) + 1):
             sql = 'SELECT right, count FROM relation ' \
-                  'WHERE left=%d AND count>2 ' \
+                  'WHERE left=%d AND count>0 ' \
                   'ORDER BY count DESC LIMIT %d' % (index, candidates)
             data = self.connection.execute(sql).fetchall()
             relation = dict(data)

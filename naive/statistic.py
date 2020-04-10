@@ -97,8 +97,8 @@ def entry(path: str, model_path='db.sqlite3'):
     create_raw_table(connection)
     charset, index_to_char = read_charset(connection, path)
     read_pinyin(connection, path, index_to_char)
-    record = {i + 1: 0 for i in range(len(charset))}
-    binary_record = {i: defaultdict(int) for i in range(len(charset) + 1)}
+    record = {i + 1: 0 for i in range(len(charset) + 1)}
+    binary_record = {i + 1: defaultdict(int) for i in range(len(charset) + 1)}
     for data in read_data(path):
         deal_text_naive(data['title'], index_to_char, record, binary_record)
         deal_text_naive(data['html'], index_to_char, record, binary_record)
