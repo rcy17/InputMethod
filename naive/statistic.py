@@ -43,8 +43,8 @@ def read_charset(connection: sqlite3.Connection, path: Path):
         with connection:
             sql = 'INSERT INTO charset values (?, 0)'
             cursor = connection.cursor()
-            cursor.execute(sql, '^')
             cursor.executemany(sql, charset)
+            cursor.execute(sql, '^')
             cursor.execute(sql, '$')
         print('Finished charset initialization')
     return set(charset), {char: index + 1 for index, char in enumerate(charset)}
@@ -98,7 +98,7 @@ def entry(path: str, model_path='db.sqlite3'):
     charset, index_to_char = read_charset(connection, path)
     read_pinyin(connection, path, index_to_char)
     record = {i + 1: 0 for i in range(len(charset))}
-    binary_record = {i + 1: defaultdict(int) for i in range(len(charset))}
+    binary_record = {i: defaultdict(int) for i in range(len(charset) + 1)}
     for data in read_data(path):
         deal_text_naive(data['title'], index_to_char, record, binary_record)
         deal_text_naive(data['html'], index_to_char, record, binary_record)

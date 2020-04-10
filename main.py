@@ -6,7 +6,9 @@ from utils import exception
 
 def main():
     model = NaiveBinaryModel('db.sqlite3')
-    for line in open('input/input2.txt'):
+    for line in open('input/input.txt'):
+        if not line.strip():
+            continue
         try:
             print(model.predict(line))
         except exception.StrangePinyinError as e:
