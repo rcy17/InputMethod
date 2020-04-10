@@ -1,3 +1,5 @@
 
 
-smooth = 0.8
+smooth = 1
+candidates = 100
+

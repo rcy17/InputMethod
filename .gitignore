@@ -2,6 +2,7 @@ data
 input
 output
 .idea
+*.bak
 
 
 ########## gitignore templates for python start ##########

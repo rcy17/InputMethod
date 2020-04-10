@@ -74,7 +74,7 @@ def read_data(path):
 def regularize_relation(relation: dict):
     for key, value in relation.items():
         relation[key] = dict(sorted(value.items(), key=lambda x: x[1], reverse=True)[:100])
-h
+
 
 def insert_result(connection: sqlite3.Connection, record: dict, binary_record: dict):
     with connection:

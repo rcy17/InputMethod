@@ -5,7 +5,7 @@ from collections import defaultdict
 from utils.load import load_db_into_memory
 from utils.exception import *
 from naive.statistic import entry
-from settings import smooth
+from settings import smooth, candidates
 
 
 class NaiveBinaryModel:
@@ -14,7 +14,11 @@ class NaiveBinaryModel:
     """
     def __init__(self, model_path='db.sqlite3'):
         if not Path(model_path).exists():
-            entry('data', model_path)
+            try:
+                entry('data', model_path)
+            except Exception as e:
+                Path(model_path).unlink()
+                raise e
         self.connection = sqlite3.connect(model_path)
         self.chars = ()
         self.char_to_count = {}
@@ -45,7 +49,9 @@ class NaiveBinaryModel:
 
     def _load_relation(self):
         for index in self.char_to_likelihood:
-            sql = 'SELECT right, count FROM relation WHERE left=%d' % index
+            sql = 'SELECT right, count FROM relation ' \
+                  'WHERE left=%d AND count>2 ' \
+                  'ORDER BY count DESC LIMIT %d' % (index, candidates)
             data = self.connection.execute(sql).fetchall()
             relation = dict(data)
             # total = sum(relation.values())
@@ -70,12 +76,10 @@ class NaiveBinaryModel:
                 if not self.char_to_count[left]:
                     continue
                 p_last = last_state[left][0]
-                related = self.relation[left].get(right, 0)
-                p_related = related / self.char_to_count[left]
+                p_related = self.relation[left].get(right, 0) / self.char_to_count[left]
                 p_char = self.char_to_likelihood[right]
                 state[right][left] = p_last * (smooth * p_related + (1 - smooth) * p_char)
-        for current in state:
-            state[current][0] = sum(state[current].values())
+            state[right][0] = sum(state[right].values())
         return state
 
     def predict(self, pinyin: str):
@@ -86,12 +90,7 @@ class NaiveBinaryModel:
                 raise StrangePinyinError(each)
             states.append(self._get_next_state(states[-1], index) if states else self._get_init_state(index))
 
-        result = []
-        last = []
-        for state in reversed(states):
-            if last:
-                result.append(max(filter(lambda x: x in last, state), key=lambda x: state[x][0])[0])
-                last = state[result[-1]]
-            else:
-                result.append(max(state, key=lambda x: state[x][0]))
+        result = [max(states[-1], key=lambda x: states[-1][x][0])]
+        for state in states[:0:-1]:
+            result.append(max(filter(lambda x: x, state[result[-1]]), key=lambda x: state[result[-1]][x]))
         return ''.join(map(lambda x: self.chars[x], reversed(result)))
