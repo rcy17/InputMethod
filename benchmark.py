@@ -21,6 +21,7 @@ def run_batch_binary():
     for i in range(100, 68, -2):
         script = """tmux new-window "
         export smooth=%.2f;
+        export USE_BINARY_MODEL=1;
         python benchmark.py > result/%d;
         "
         """ % (i / 100, i)
@@ -42,4 +43,5 @@ def main(file_in, file_answer, model_class):
 
 
 if __name__ == '__main__':
-    main(settings.input_file, settings.answer_file, settings.model_class)
+    main(settings.input_file, settings.answer_file,
+         models.PinyinBinaryModel if settings.use_binary else models.TrigramModel)
