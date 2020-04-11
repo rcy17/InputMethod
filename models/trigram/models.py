@@ -24,6 +24,7 @@ class TrigramModel:
                 embed()
             except Exception as e:
                 # Path(model_path).unlink()
+                print(datetime.now(), 'Meet error', type(e), e)
                 embed()
                 raise e
         self.smooth_1 = settings.smooth_1

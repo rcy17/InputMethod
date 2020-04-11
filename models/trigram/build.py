@@ -183,6 +183,8 @@ def train(path: str, model_path: str):
         # Meet keyboard interrupt firstly, just stop read_data
         pass
     # Just wait until connect successfully
+    print(datetime.now(), 'Try to get lock')
     connection = connection or sqlite3.connect(model_path, timeout=999999)
     insert_result(connection, record, binary_record, ternary_record)
     connection.close()
+    print(datetime.now(), 'Release lock')

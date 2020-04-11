@@ -7,5 +7,4 @@ candidates = 20
 occurrence_bound = 5
 key = os.environ.get('FILE_KEY', '2016')
 warning = False
-debug = True
-fetch_size = 1024
+debug = False

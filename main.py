@@ -2,6 +2,7 @@ import models
 from utils import exception
 try:
     from tqdm import tqdm
+    raise ImportError
 except ImportError:
     tqdm = lambda x: x
 
@@ -13,14 +14,14 @@ def main():
     char_count = 0
     line_correct = 0
     line_count = 0
-    for line in tqdm(open('input/test2.txt')):
+    for line in tqdm(open('input/input.txt')):
         line = line.strip()
         if not line:
             continue
         try:
             # print(line, end='')
             result = model.predict(line)
-            # print(result)
+            print(result)
         except exception.StrangePinyinError as e:
             # print('遇到了超出数据库的拼音', e.args[0])
             char_count += len(line)
