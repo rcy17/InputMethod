@@ -2,6 +2,7 @@ import sqlite3
 import json
 from pathlib import Path
 from collections import defaultdict
+from datetime import datetime
 
 from pypinyin import lazy_pinyin, STYLE_NORMAL, load_single_dict, load_phrases_dict
 from tqdm import tqdm
@@ -80,16 +81,18 @@ def regularize_relation(relation: dict):
 
 
 def insert_result(connection: sqlite3.Connection, record: dict, binary_record: dict):
+    now = datetime.now()
     with connection:
         sql = 'UPDATE char_set SET count=count+? WHERE oid=?'
         connection.executemany(sql, ((count, index) for index, count in record.items()))
-    print('Finished word record insertion')
+    print('Finished word record insertion in', (datetime.now() - now).total_seconds(), 's')
+    now = datetime.now()
     with connection:
         sql = 'INSERT OR IGNORE INTO relation values (?, ?, ?, 0) '
         connection.executemany(sql, ((*k, r) for k, d in binary_record.items() for r, c in d.items()))
         sql = 'UPDATE relation SET count=count+? where left=? and middle=? and right=?'
         connection.executemany(sql, ((c, *k, r) for k, d in binary_record.items() for r, c in d.items()))
-    print('Finished relation insertion')
+    print('Finished relation insertion in', (datetime.now() - now).total_seconds(), 's')
 
 
 def register_pinyin():
@@ -146,6 +149,6 @@ def train(path: str, model_path: str):
         deal_text(data['title'], pinyin_char_table, record, ternary_record)
         deal_text(data['html'], pinyin_char_table, record, ternary_record)
     regularize_relation(ternary_record)
-    connection = connection or sqlite3.connect(model_path, timeout=30)
+    connection = connection or sqlite3.connect(model_path, timeout=300)
     insert_result(connection, record, ternary_record)
     connection.close()

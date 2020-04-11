@@ -23,7 +23,8 @@ class TrigramModel:
                 train('data', model_path)
                 embed()
             except Exception as e:
-                Path(model_path).unlink()
+                # Path(model_path).unlink()
+                embed()
                 raise e
         self.smooth = settings.smooth
         self.candidates = settings.candidates
@@ -64,7 +65,7 @@ class TrigramModel:
         self._load_relation()
         print('Finished load model, cost ', (datetime.now() - now).total_seconds(), 's')
 
-    def _update_next_state(self, last_state, state):
+    def _update_next_state(self, left_state, middle_state, state):
         smooth = self.smooth
         for right in state:
             for left in last_state:
@@ -86,7 +87,7 @@ class TrigramModel:
             candidates = self.table.get(each)
             if not candidates:
                 raise StrangePinyinError(each)
-            states.append(self._update_next_state(states[-1], {current: {} for current in candidates}))
+            states.append(self._update_next_state(states[-2], states[-1], {current: {} for current in candidates}))
         end_state = self._update_next_state(states[-1], {stop: {}})[stop]
         end_state.pop(0)
         result = [max(end_state, key=lambda x: end_state[x])]
