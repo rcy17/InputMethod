@@ -1,6 +1,6 @@
 import os
 
-smooth = 0.9
-candidates = 50
-occurrence_bound = 10
+smooth = 0.72
+candidates = 100
+occurrence_bound = 5
 key = os.environ.get('FILE_KEY', '2016')

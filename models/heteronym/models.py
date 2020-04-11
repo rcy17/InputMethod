@@ -33,7 +33,7 @@ class PinyinBinaryModel:
         self.char_to_count = {}
         self.char_to_likelihood = {}
         self.relation = defaultdict(dict)
-        self.table = defaultdict(list)
+        self.table = defaultdict()
         self.pinyin_to_index = {}
         self.char_related_count = {}
         self.initialize()
@@ -47,7 +47,7 @@ class PinyinBinaryModel:
         total_char_count = sum(self.char_to_count[:-2])
         self.char_to_likelihood = [count / total_char_count for count in self.char_to_count]
         for index, (pinyin, char, count) in enumerate(data):
-            self.table[pinyin].append(index)
+            self.table.setdefault(pinyin, []).append(index + 1)
 
     def _load_relation(self):
         for index in range(1, 1 + len(self.chars) + 1):
@@ -84,9 +84,10 @@ class PinyinBinaryModel:
         states = [{start: {0: 1}}]
         for each in pinyin.split():
             each = each.lower()
-            if not each:
+            candidates = self.table.get(each)
+            if not candidates:
                 raise StrangePinyinError(each)
-            states.append(self._update_next_state(states[-1], {current: {} for current in self.table[each]}))
+            states.append(self._update_next_state(states[-1], {current: {} for current in candidates}))
         end_state = self._update_next_state(states[-1], {stop: {}})[stop]
         end_state.pop(0)
         result = [max(end_state, key=lambda x: end_state[x])]
