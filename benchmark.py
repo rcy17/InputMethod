@@ -6,12 +6,12 @@ from functools import reduce
 
 
 def run_batch():
-    for i in range(2, 12, 2):
-        for j in range(12, 22, 2):
-            script = """tmux new-window"
+    for i in range(4, 12, 2):
+        for j in range(14, 22, 2):
+            script = """tmux new-window "
             export INPUT_METHOD_SMOOTH_1=0.%02d;
             export INPUT_METHOD_SMOOTH_2=0.%02d;
-            python main.py > result/%d_%d;
+            python benchmark.py > result/%d_%d;
             "
             """ % (i, j, i, j)
             os.system(script)
