@@ -3,7 +3,7 @@ from utils import exception
 
 
 def main():
-    model = PinyinBinaryModel(force_create=False)
+    model = TrigramModel(force_create=True)
     result = None
     correct = 0
     char_count = 0

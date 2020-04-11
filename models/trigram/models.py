@@ -83,10 +83,8 @@ class TrigramModel:
                     p_last = middle_state[left][0]
                     p1 = self.char_to_likelihood[right]
                     p2 = self.relation2.get((mid, right), 0) / self.char_to_count.get(mid, 1)
-                    if self.relation2.get((left, mid)):
-                        p3 = self.relation3[left, mid].get(right, 0) / self.relation2[left, mid]
-                    else:
-                        p3 = 0
+                    count_left_mid = self.relation2.get((left, mid), 0)
+                    p3 = count_left_mid and self.relation3[left, mid].get(right, 0) / count_left_mid
                     state[right][left] = p_last * (smooth_1 * p1 + smooth_2 * p2 + (1 - smooth_1 - smooth_2) * p3)
                 state[right][0] = sum(state[right].values())
         return state
