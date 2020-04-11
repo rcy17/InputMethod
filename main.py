@@ -14,14 +14,14 @@ def main():
     char_count = 0
     line_correct = 0
     line_count = 0
-    for line in tqdm(open('input/input.txt')):
+    for line in tqdm(open('input/test1.txt')):
         line = line.strip()
         if not line:
             continue
         try:
             # print(line, end='')
             result = model.predict(line)
-            print(result)
+            # print(result)
         except exception.StrangePinyinError as e:
             # print('遇到了超出数据库的拼音', e.args[0])
             char_count += len(line)
