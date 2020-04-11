@@ -14,7 +14,7 @@ class PinyinBinaryModel:
     """
     Naive binary model with viterbi algorithm
     """
-    def __init__(self, model_path='naive.sqlite3'):
+    def __init__(self, model_path='pinyin.sqlite3'):
         if not Path(model_path).exists():
             try:
                 from sys import stderr
@@ -83,10 +83,10 @@ class PinyinBinaryModel:
         start = stop - 1            # for ^
         states = [{start: {0: 1}}]
         for each in pinyin.split():
-            index = self.pinyin_to_index.get(each.lower())
-            if not index:
+            each = each.lower()
+            if not each:
                 raise StrangePinyinError(each)
-            states.append(self._update_next_state(states[-1], {current: {} for current in self.table[index]}))
+            states.append(self._update_next_state(states[-1], {current: {} for current in self.table[each]}))
         end_state = self._update_next_state(states[-1], {stop: {}})[stop]
         end_state.pop(0)
         result = [max(end_state, key=lambda x: end_state[x])]

@@ -1,4 +1,4 @@
-from sys import stderr
+
 import sqlite3
 import json
 from pathlib import Path
@@ -6,6 +6,8 @@ from collections import defaultdict
 
 from pypinyin import lazy_pinyin, STYLE_NORMAL, load_single_dict, load_phrases_dict
 from tqdm import tqdm
+
+import settings
 
 REGULAR_PINYIN = {
     'lve': 'lue',
@@ -22,21 +24,24 @@ FORCE_PINYIN = {
 
 
 def create_raw_table(connection: sqlite3.Connection):
+    if not connection:
+        print('Database already exists')
+        return
     sql = """
-        CREATE TABLE char_set (
+        CREATE TABLE IF NOT EXISTS char_set (
             pinyin CHARACTER (7),
             char CHARACTER (1),
             count INT
         );
-        CREATE UNIQUE INDEX pinyin_char on char_set(pinyin, char);
-        CREATE TABLE relation (
+        CREATE UNIQUE INDEX IF NOT EXISTS pinyin_char on char_set(pinyin, char);
+        CREATE TABLE IF NOT EXISTS relation (
             left INT,
             right INT,
             count INT,
             FOREIGN KEY(left) REFERENCES char_set(oid),
             FOREIGN KEY(right) REFERENCES char_set(oid)
         );
-        CREATE UNIQUE INDEX relation_index on relation(left, right);
+        CREATE UNIQUE INDEX IF NOT EXISTS relation_index on relation(left, right);
     """
     connection.executescript(sql)
     print('Finished table creation')
@@ -61,8 +66,9 @@ def read_pinyin(connection: sqlite3.Connection, path: Path):
 
 
 def read_data(path):
+    keyword = settings.key
     for file in path.iterdir():
-        if '2016-02' not in str(file):
+        if keyword not in str(file):
             continue
         bar = tqdm(open(file, encoding='gbk'))
         bar.set_description(str(file))
@@ -77,13 +83,14 @@ def regularize_relation(relation: dict):
 
 def insert_result(connection: sqlite3.Connection, record: dict, binary_record: dict):
     with connection:
-        sql = 'UPDATE char_set SET count=? WHERE oid=?'
+        sql = 'UPDATE char_set SET count=count+? WHERE oid=?'
         connection.executemany(sql, ((count, index) for index, count in record.items()))
     print('Finished word record insertion')
-    regularize_relation(binary_record)
     with connection:
-        sql = 'INSERT INTO relation values (?, ?, ?)'
-        connection.executemany(sql, ((l, r, c) for l, d in binary_record.items() for r, c in d.items()))
+        sql = 'INSERT OR IGNORE INTO relation values (?, ?, 0) '
+        connection.executemany(sql, ((l, r) for l, d in binary_record.items() for r, c in d.items()))
+        sql = 'UPDATE relation SET count=count+? where left=? and right=?'
+        connection.executemany(sql, ((c, l, r) for l, d in binary_record.items() for r, c in d.items()))
     print('Finished relation insertion')
 
 
@@ -127,7 +134,7 @@ def deal_text(text: str, pinyin_char_table: dict, record: dict, binary_record: d
 def train(path: str, model_path: str):
     register_pinyin()
     path = Path(path)
-    connection = sqlite3.connect(model_path)
+    connection = not Path(model_path).exists() and sqlite3.connect(model_path)
     create_raw_table(connection)
     pinyin_table, pinyin_char_table = read_pinyin(connection, path)
     record = {i + 1: 0 for i in range(len(pinyin_char_table) + 1)}
@@ -135,5 +142,7 @@ def train(path: str, model_path: str):
     for data in read_data(path):
         deal_text(data['title'], pinyin_char_table, record, binary_record)
         deal_text(data['html'], pinyin_char_table, record, binary_record)
+    regularize_relation(binary_record)
+    connection = connection or sqlite3.connect(model_path, timeout=30)
     insert_result(connection, record, binary_record)
     connection.close()
