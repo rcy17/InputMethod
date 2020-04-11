@@ -3,6 +3,8 @@ input
 output
 .idea
 *.bak
+*.sqlite3
+*.sqlite3-journal
 
 
 ########## gitignore templates for python start ##########

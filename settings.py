@@ -1,5 +1,6 @@
 
 
-smooth = 0.8
-candidates = 15
+smooth = 0.79
+candidates = 100
+occurrence_bound = 0
 

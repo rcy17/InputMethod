@@ -4,23 +4,25 @@ from collections import defaultdict
 from datetime import datetime
 
 from utils.exception import *
-from naive.statistic import entry
-from settings import smooth, candidates
+from .build import train
+import settings
 
 
 class NaiveBinaryModel:
     """
     Naive binary model with viterbi algorithm
     """
-    def __init__(self, model_path='db.sqlite3'):
+    def __init__(self, model_path='naive.sqlite3'):
         if not Path(model_path).exists():
             try:
                 from sys import stderr
                 print('WARNING: no model file at', model_path, 'and try to build model')
-                entry('data', model_path)
+                train('data', model_path)
             except Exception as e:
                 Path(model_path).unlink()
                 raise e
+        self.smooth = settings.smooth
+        self.candidates = settings.candidates
         self.connection = sqlite3.connect(model_path)
         self.chars = ()
         self.char_to_count = {}
@@ -53,7 +55,7 @@ class NaiveBinaryModel:
         for index in range(1, 1 + len(self.chars) + 1):
             sql = 'SELECT right, count FROM relation ' \
                   'WHERE left=%d AND count>0 ' \
-                  'ORDER BY count DESC LIMIT %d' % (index, candidates)
+                  'ORDER BY count DESC LIMIT %d' % (index, self.candidates)
             data = self.connection.execute(sql).fetchall()
             relation = dict(data)
             self.relation[index] = relation
@@ -67,6 +69,7 @@ class NaiveBinaryModel:
         print('Finished load model, cost ', (datetime.now() - now).total_seconds(), 's')
 
     def _update_next_state(self, last_state, state):
+        smooth = self.smooth
         for right in state:
             for left in last_state:
                 if not self.char_to_count[left]:

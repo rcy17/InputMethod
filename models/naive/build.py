@@ -5,8 +5,6 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-from naive.deal import deal_text_naive
-
 
 def create_raw_table(connection: sqlite3.Connection):
     sql = """
@@ -54,7 +52,7 @@ def read_pinyin(connection: sqlite3.Connection, path: Path, char_to_index: dict)
     pinyin_table = {l.split()[0]: l.split()[1:] for l in open(str(path.joinpath('table.txt')), encoding='gbk')}
     if connection:
         sql = f'INSERT INTO pinyin_set values (?)'
-        connection.executemany(sql, ((pinyin, ) for pinyin in pinyin_table.keys()))
+        connection.executemany(sql, ((pinyin,) for pinyin in pinyin_table.keys()))
         print('Finished pinyin_set insertion')
         sql = f'INSERT INTO pinyin_char values (?, ?)'
         for index, chars in enumerate(pinyin_table.values()):
@@ -91,7 +89,22 @@ def insert_result(connection: sqlite3.Connection, record: dict, binary_record: d
     print('Finished relation insertion')
 
 
-def entry(path: str, model_path='db.sqlite3'):
+def deal_text(text: str, char_to_index: dict, record: dict, binary_record: dict):
+    start = len(char_to_index) + 1
+    stop = len(char_to_index) + 2
+    left = start
+    for right in text:
+        right = char_to_index.get(right, start)
+        record[right] += 1
+        if right != start:
+            binary_record[left][right] += 1
+        elif left != start:
+            binary_record[left][stop] += 1
+        left = right
+    return
+
+
+def train(path: str, model_path: str):
     path = Path(path)
     connection = sqlite3.connect(model_path)
     create_raw_table(connection)
@@ -100,7 +113,7 @@ def entry(path: str, model_path='db.sqlite3'):
     record = {i + 1: 0 for i in range(len(charset) + 1)}
     binary_record = {i + 1: defaultdict(int) for i in range(len(charset) + 1)}
     for data in read_data(path):
-        deal_text_naive(data['title'], index_to_char, record, binary_record)
-        deal_text_naive(data['html'], index_to_char, record, binary_record)
+        deal_text(data['title'], index_to_char, record, binary_record)
+        deal_text(data['html'], index_to_char, record, binary_record)
     insert_result(connection, record, binary_record)
     connection.close()
