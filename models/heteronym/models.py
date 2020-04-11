@@ -14,6 +14,7 @@ class PinyinBinaryModel:
     """
     Naive binary model with viterbi algorithm
     """
+
     def __init__(self, model_path='pinyin.sqlite3', force_create=False):
         if not Path(model_path).exists() or force_create:
             try:
@@ -32,7 +33,7 @@ class PinyinBinaryModel:
         self.chars = ()
         self.char_to_count = {}
         self.char_to_likelihood = {}
-        self.relation = defaultdict(dict)
+        self.relation = {}
         self.table = defaultdict()
         self.pinyin_to_index = {}
         self.char_related_count = {}
@@ -42,21 +43,17 @@ class PinyinBinaryModel:
     def _load_charset(self):
         sql = 'SELECT * from char_set ORDER BY oid'
         data = self.connection.execute(sql).fetchall()
-        self.chars = ('', ) + tuple(each[1] for each in data)
-        self.char_to_count = (0, ) + tuple(each[2] for each in data)
+        self.chars = ('',) + tuple(each[1] for each in data)
+        self.char_to_count = (0,) + tuple(each[2] for each in data)
         total_char_count = sum(self.char_to_count[:-2])
         self.char_to_likelihood = [count / total_char_count for count in self.char_to_count]
         for index, (pinyin, char, count) in enumerate(data):
             self.table.setdefault(pinyin, []).append(index + 1)
 
     def _load_relation(self):
-        for index in range(1, 1 + len(self.chars) + 1):
-            sql = 'SELECT right, count FROM relation ' \
-                  'WHERE left=%d AND count>%d ' \
-                  'ORDER BY count DESC LIMIT %d' % (index, self.occurrence_bound, self.candidates)
-            data = self.connection.execute(sql).fetchall()
-            relation = dict(data)
-            self.relation[index] = relation
+        sql = 'SELECT left, group_concat(right), group_concat(count) FROM relation GROUP BY left'
+        self.relation = {left: dict(zip(map(int, rights.split(',')), map(int, counts.split(',')))) for
+                         left, rights, counts in self.connection.execute(sql)}
 
     def initialize(self):
         print('Loading model...')
@@ -69,18 +66,21 @@ class PinyinBinaryModel:
         smooth = self.smooth
         for right in state:
             for left in last_state:
-                if not self.char_to_count[left]:
+                if not self.relation.get(left):
                     continue
                 p_last = last_state[left][0]
-                p_related = self.relation[left].get(right, 0) / self.char_to_count[left]
-                p_char = self.char_to_likelihood[right]
-                state[right][left] = p_last * (smooth * p_related + (1 - smooth) * p_char)
-            state[right][0] = sum(state[right].values())
+                p1 = self.char_to_likelihood[right]
+                if self.relation.get(left):
+                    p2 = self.relation[left].get(right, 0) / self.char_to_count[left]
+                else:
+                    p2 = 0
+                state[right][left] = p_last * (smooth * p2 + (1 - smooth) * p1)
+            state[right][0] = max(state[right].values())
         return state
 
     def predict(self, pinyin: str):
         stop = len(self.chars) - 1  # for $
-        start = stop - 1            # for ^
+        start = stop - 1  # for ^
         states = [{start: {0: 1}}]
         for each in pinyin.split():
             each = each.lower()

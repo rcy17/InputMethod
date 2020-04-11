@@ -3,7 +3,7 @@ from utils import exception
 
 
 def main():
-    model = TrigramModel(force_create=True)
+    model = PinyinBinaryModel(force_create=False)
     result = None
     correct = 0
     char_count = 0
@@ -14,7 +14,7 @@ def main():
         try:
             # print(line, end='')
             result = model.predict(line)
-            # print(result)
+            print(result)
         except exception.StrangePinyinError as e:
             # print('遇到了超出数据库的拼音', e.args[0])
             char_count += len(line)

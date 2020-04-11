@@ -26,7 +26,8 @@ class TrigramModel:
                 # Path(model_path).unlink()
                 embed()
                 raise e
-        self.smooth = settings.smooth
+        self.smooth_1 = settings.smooth_1
+        self.smooth_2 = settings.smooth_2
         self.candidates = settings.candidates
         self.occurrence_bound = settings.occurrence_bound
         self.connection = sqlite3.connect(model_path)
@@ -34,7 +35,9 @@ class TrigramModel:
         self.chars = ()
         self.char_to_count = {}
         self.char_to_likelihood = {}
-        self.relation = defaultdict(dict)
+        self.relation_to_likelihood = {}
+        self.relation2 = {}
+        self.relation3 = {}
         self.table = defaultdict()
         self.pinyin_to_index = {}
         self.char_related_count = {}
@@ -52,11 +55,17 @@ class TrigramModel:
             self.table.setdefault(pinyin, []).append(index + 1)
 
     def _load_relation(self):
+        sql = 'SELECT left, group_concat(right), group_concat(count) FROM relation2 GROUP BY left'
+        self.relation2 = {left: dict(zip(map(int, rights.split(',')), map(int, counts.split(',')))) for
+                          left, rights, counts in self.connection.execute(sql)}
+        total_relation_count = sum(self.relation2.values())
+        self.relation_to_likelihood = {key: count / total_relation_count for key, count in self.relation2.items()}
+
         sql = 'SELECT left, middle, group_concat(right), group_concat(count)' \
-              ' FROM relation WHERE count>%d GROUP BY left, middle' % (self.occurrence_bound,)
+              ' FROM relation3 WHERE count>%d GROUP BY left, middle' % (self.occurrence_bound,)
         cursor = self.connection.execute(sql)
-        self.relation = {(left, middle): dict(zip(map(int, rights.split(',')), map(int, counts.split(',')))) for
-                         left, middle, rights, counts in cursor.fetchall()}
+        self.relation3 = {(left, middle): dict(zip(map(int, rights.split(',')), map(int, counts.split(',')))) for
+                          left, middle, rights, counts in cursor.fetchall()}
 
     def initialize(self):
         print('Loading model...')
@@ -66,16 +75,20 @@ class TrigramModel:
         print('Finished load model, cost ', (datetime.now() - now).total_seconds(), 's')
 
     def _update_next_state(self, left_state, middle_state, state):
-        smooth = self.smooth
+        smooth_1 = self.smooth_1
+        smooth_2 = self.smooth_2
         for right in state:
-            for left in last_state:
-                if not self.char_to_count[left]:
-                    continue
-                p_last = last_state[left][0]
-                p_related = self.relation[left].get(right, 0) / self.char_to_count[left]
-                p_char = self.char_to_likelihood[right]
-                state[right][left] = p_last * (smooth * p_related + (1 - smooth) * p_char)
-            state[right][0] = sum(state[right].values())
+            for mid in middle_state:
+                for left in left_state:
+                    p_last = middle_state[left][0]
+                    p1 = self.char_to_likelihood[right]
+                    p2 = self.relation2.get((mid, right), 0) / self.char_to_count.get(mid, 1)
+                    if self.relation2.get((left, mid)):
+                        p3 = self.relation3[left, mid].get(right, 0) / self.relation2[left, mid]
+                    else:
+                        p3 = 0
+                    state[right][left] = p_last * (smooth_1 * p1 + smooth_2 * p2 + (1 - smooth_1 - smooth_2) * p3)
+                state[right][0] = sum(state[right].values())
         return state
 
     def predict(self, pinyin: str):
