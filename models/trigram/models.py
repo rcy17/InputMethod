@@ -64,8 +64,8 @@ class TrigramModel:
 
         sql = 'SELECT left, middle, group_concat(right), group_concat(count)' \
               ' FROM relation3 WHERE count>%d GROUP BY left, middle' % (self.occurrence_bound,)
-        self.relation3 = {(left, mid): {k: count for k, count in zip(map(int, rights.split(',')), map(
-            int, counts.split(','))) } for left, mid, rights, counts in self.connection.execute(sql)}
+        self.relation3 = {(left, mid): dict(zip(map(int, rights.split(',')), map(int, counts.split(','))))
+                          for left, mid, rights, counts in self.connection.execute(sql)}
 
     def initialize(self):
         print('Loading model...')

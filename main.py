@@ -28,6 +28,8 @@ def main():
             line_correct += result == line
             for a, b in zip(result, line):
                 char_correct += a == b
+        except KeyboardInterrupt:
+            break
     if char_count:
         print(char_correct, char_count, char_correct / char_count)
     if line_count:

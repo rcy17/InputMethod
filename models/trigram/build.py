@@ -182,8 +182,8 @@ def train(path: str, model_path: str):
     except KeyboardInterrupt:
         # Meet keyboard interrupt firstly, just stop read_data
         pass
-    regularize_relation(binary_record)
-    regularize_relation(ternary_record)
+    # regularize_relation(binary_record)
+    # regularize_relation(ternary_record)
     connection = connection or sqlite3.connect(model_path, timeout=300)
     insert_result(connection, record, binary_record, ternary_record)
     connection.close()
