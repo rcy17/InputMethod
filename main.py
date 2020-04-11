@@ -3,18 +3,18 @@ from utils import exception
 
 
 def main():
-    model = TrigramModel(force_create=True)
+    model = TrigramModel(force_create=False)
     result = None
     correct = 0
     char_count = 0
-    for line in open('input/input.txt'):
+    for line in open('input/test1.txt'):
         line = line.strip()
         if not line:
             continue
         try:
             # print(line, end='')
             result = model.predict(line)
-            print(result)
+            # print(result)
         except exception.StrangePinyinError as e:
             # print('遇到了超出数据库的拼音', e.args[0])
             char_count += len(line)

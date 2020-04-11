@@ -56,10 +56,10 @@ class TrigramModel:
 
     def _load_relation(self):
         sql = 'SELECT left, group_concat(right), group_concat(count) FROM relation2 GROUP BY left'
-        self.relation2 = {left: dict(zip(map(int, rights.split(',')), map(int, counts.split(',')))) for
-                          left, rights, counts in self.connection.execute(sql)}
-        total_relation_count = sum(self.relation2.values())
-        self.relation_to_likelihood = {key: count / total_relation_count for key, count in self.relation2.items()}
+        self.relation2 = {(left, right): count for left, rights, counts in self.connection.execute(sql) for
+                          right, count in zip(map(int, rights.split(',')), map(int, counts.split(',')))}
+        # total_relation_count = sum(self.relation2.values())
+        # self.relation_to_likelihood = {key: count / total_relation_count for key, count in self.relation2.items()}
 
         sql = 'SELECT left, middle, group_concat(right), group_concat(count)' \
               ' FROM relation3 WHERE count>%d GROUP BY left, middle' % (self.occurrence_bound,)
@@ -74,34 +74,44 @@ class TrigramModel:
         self._load_relation()
         print('Finished load model, cost ', (datetime.now() - now).total_seconds(), 's')
 
-    def _update_next_state(self, left_state, middle_state, state):
+    def _get_next_state(self, last_state, candidates):
         smooth_1 = self.smooth_1
         smooth_2 = self.smooth_2
-        for right in state:
-            for mid in middle_state:
-                for left in left_state:
-                    p_last = middle_state[left][0]
-                    p1 = self.char_to_likelihood[right]
-                    p2 = self.relation2.get((mid, right), 0) / self.char_to_count.get(mid, 1)
-                    count_left_mid = self.relation2.get((left, mid), 0)
-                    p3 = count_left_mid and self.relation3[left, mid].get(right, 0) / count_left_mid
-                    state[right][left] = p_last * (smooth_1 * p1 + smooth_2 * p2 + (1 - smooth_1 - smooth_2) * p3)
-                state[right][0] = sum(state[right].values())
+        state = defaultdict(dict)
+        for right in candidates:
+            for mid, left in last_state:
+                if (left, mid, right) in [
+                    (5236, 2232, 7498),
+                    (5239, 2289, 5880)
+                ]:
+                    left = left
+                p_last = last_state[mid, left][0]
+                p1 = self.char_to_likelihood[right]
+                p2 = self.relation2.get((mid, right), 0) / (self.char_to_count[mid] or 1)
+                count_left_mid = self.relation2.get((left, mid), 0)
+                count_left_mid_right = self.relation3.get((left, mid), {}).get(right, 0)
+                p3 = count_left_mid and count_left_mid_right / count_left_mid
+                p = p_last * (smooth_1 * p1 + smooth_2 * p2 + (1 - smooth_1 - smooth_2) * p3)
+                state[right, mid][left] = p
+                state[right, mid][0] = max(state[right, mid].get(0, 0), p)
         return state
 
     def predict(self, pinyin: str):
         stop = len(self.chars) - 1  # for $
         start = stop - 1  # for ^
-        states = [{start: {0: 1}}, {start: {0: 1, start: 1}}]
+        states = [{(start, start): {0: 1}}]
         for each in pinyin.split():
             each = each.lower()
             candidates = self.table.get(each)
             if not candidates:
                 raise StrangePinyinError(each)
-            states.append(self._update_next_state(states[-2], states[-1], {current: {} for current in candidates}))
-        end_state = self._update_next_state(states[-1], {stop: {}})[stop]
-        end_state.pop(0)
-        result = [max(end_state, key=lambda x: end_state[x])]
-        for state in states[:0:-1]:
-            result.append(max(filter(lambda x: x, state[result[-1]]), key=lambda x: state[result[-1]][x]))
-        return ''.join(map(lambda x: self.chars[x], reversed(result[:-1])))
+            states.append(self._get_next_state(states[-1], candidates))
+        states.append(self._get_next_state(states[-1], [stop]))
+        states.append(self._get_next_state(states[-1], [stop]))
+        result = [stop, stop]
+        for state in states[:1:-1]:
+            right, mid = result[-2:]
+            transition = state[right, mid]
+            transition.pop(0)
+            result.append(max(transition, key=lambda x: transition[x]))
+        return ''.join(map(lambda x: self.chars[x], reversed(result[2:-1])))

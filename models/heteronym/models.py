@@ -66,14 +66,10 @@ class PinyinBinaryModel:
         smooth = self.smooth
         for right in state:
             for left in last_state:
-                if not self.relation.get(left):
-                    continue
                 p_last = last_state[left][0]
                 p1 = self.char_to_likelihood[right]
-                if self.relation.get(left):
-                    p2 = self.relation[left].get(right, 0) / self.char_to_count[left]
-                else:
-                    p2 = 0
+                count_left_right = self.relation.get(left, {}).get(right, 0)
+                p2 = count_left_right and count_left_right / self.char_to_count[left]
                 state[right][left] = p_last * (smooth * p2 + (1 - smooth) * p1)
             state[right][0] = max(state[right].values())
         return state
