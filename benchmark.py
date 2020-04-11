@@ -1,7 +1,20 @@
 import models
+import os
 import settings
 from tqdm import tqdm
 from functools import reduce
+
+
+def run_batch():
+    for i in range(2, 12, 2):
+        for j in range(12, 22, 2):
+            script = """tmux new-session "
+            export INPUT_METHOD_SMOOTH_1=0.%02d;
+            export INPUT_METHOD_SMOOTH_2=0.%02d;
+            python main.py > result/%d_%d;
+            "
+            """
+            os.system(script)
 
 
 def main(file_in, file_answer):
