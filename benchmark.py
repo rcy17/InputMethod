@@ -6,9 +6,9 @@ from functools import reduce
 
 def main(file_in, file_answer):
     model = models.TrigramModel()
-    inputs = filter(lambda x: x.strip(), open(file_in).readlines())
+    inputs = [line.strip() for line in open(file_in) if line.strip()]
     results = [model.predict(line) for line in tqdm(inputs)]
-    answers = filter(lambda x: x.strip(), open(file_answer))
+    answers = [line.strip() for line in open(file_answer) if line.strip()]
     char_count, char_correct = 0, 0
     line_count, line_correct = 0, len(results)
     for result, ans in zip(results, answers):

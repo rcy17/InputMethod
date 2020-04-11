@@ -1,10 +1,5 @@
 import models
 from utils import exception
-try:
-    from tqdm import tqdm
-    raise ImportError
-except ImportError:
-    tqdm = lambda x: x
 
 
 def main():
@@ -14,7 +9,7 @@ def main():
     char_count = 0
     line_correct = 0
     line_count = 0
-    for line in tqdm(open('input/test1.txt')):
+    for line in open('input/test1.txt'):
         line = line.strip()
         if not line:
             continue
