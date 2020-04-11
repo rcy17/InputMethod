@@ -3,7 +3,7 @@ from utils import exception
 
 
 def main():
-    model = PinyinBinaryModel('pinyin.sqlite3')
+    model = PinyinBinaryModel('pinyin.sqlite3', force_create=True)
     result = None
     correct = 0
     char_count = 0

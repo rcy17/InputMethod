@@ -14,8 +14,8 @@ class PinyinBinaryModel:
     """
     Naive binary model with viterbi algorithm
     """
-    def __init__(self, model_path='pinyin.sqlite3'):
-        if not Path(model_path).exists():
+    def __init__(self, model_path='pinyin.sqlite3', force_create=False):
+        if not Path(model_path).exists() or force_create:
             try:
                 from sys import stderr
                 print('WARNING: no model file at', model_path, 'and try to build model')
