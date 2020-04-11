@@ -69,8 +69,7 @@ class TrigramModel:
         # total_relation_count = sum(self.relation2.values())
         # self.relation_to_likelihood = {key: count / total_relation_count for key, count in self.relation2.items()}
 
-        sql = 'SELECT left, middle, group_concat(right), group_concat(count)' \
-              ' FROM relation3 WHERE count>%d GROUP BY left, middle' % (self.occurrence_bound,)
+        sql = 'SELECT left, middle, group_concat(right), group_concat(count) FROM relation3 GROUP BY left, middle'
         self.relation3 = {(left, mid): dict(zip(map(int, rights.split(',')), map(int, counts.split(','))))
                           for left, mid, rights, counts in self.connection.execute(sql)}
 
