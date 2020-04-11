@@ -2,6 +2,7 @@ import sqlite3
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime
+from sys import stderr
 
 from IPython import embed
 
@@ -56,11 +57,11 @@ class PinyinBinaryModel:
                          left, rights, counts in self.connection.execute(sql)}
 
     def initialize(self):
-        print('Loading model...')
+        print('Loading model...', file=stderr)
         now = datetime.now()
         self._load_charset()
         self._load_relation()
-        print('Finished load model, cost ', (datetime.now() - now).total_seconds(), 's')
+        print('Finished load model, cost ', (datetime.now() - now).total_seconds(), 's', file=stderr)
 
     def _update_next_state(self, last_state, state):
         smooth = self.smooth
