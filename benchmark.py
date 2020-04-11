@@ -17,8 +17,18 @@ def run_batch():
             os.system(script)
 
 
-def main(file_in, file_answer):
-    model = models.TrigramModel()
+def run_batch_binary():
+    for i in range(100, 68, -2):
+        script = """tmux new-window "
+        export smooth=%.2f;
+        python benchmark.py > result/%d;
+        "
+        """ % (i / 100, i)
+        os.system(script)
+
+
+def main(file_in, file_answer, model_class):
+    model = model_class()
     inputs = [line.strip() for line in open(file_in) if line.strip()]
     results = [model.predict(line) for line in tqdm(inputs)]
     answers = [line.strip() for line in open(file_answer) if line.strip()]
@@ -32,4 +42,4 @@ def main(file_in, file_answer):
 
 
 if __name__ == '__main__':
-    main(settings.input_file, settings.answer_file)
+    main(settings.input_file, settings.answer_file, settings.model_class)
