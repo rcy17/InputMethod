@@ -31,7 +31,13 @@ class TrigramModel:
         self.smooth_2 = settings.smooth_2
         self.candidates = settings.candidates
         self.occurrence_bound = settings.occurrence_bound
-        self.connection = sqlite3.connect(model_path)
+        connection = None
+        while connection is None:
+            try:
+                connection = sqlite3.connect(model_path)
+            except sqlite3.OperationalError as e:
+                print(datetime.now(), e, 'Keep wating...')
+        self.connection = connection
         self.char_pinyin = ()
         self.chars = ()
         self.char_to_count = {}
