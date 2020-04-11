@@ -36,7 +36,7 @@ class TrigramModel:
             try:
                 connection = sqlite3.connect(model_path)
             except sqlite3.OperationalError as e:
-                print(datetime.now(), e, 'Keep wating...')
+                print(datetime.now(), e, 'Keep waiting...')
         self.connection = connection
         self.char_pinyin = ()
         self.chars = ()
