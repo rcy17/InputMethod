@@ -80,7 +80,7 @@ class TrigramModel:
     def predict(self, pinyin: str):
         stop = len(self.chars) - 1  # for $
         start = stop - 1  # for ^
-        states = [{start: {0: 1}}]
+        states = [{start: {0: 1}}, {start: {0: 1, start: 1}}]
         for each in pinyin.split():
             each = each.lower()
             candidates = self.table.get(each)

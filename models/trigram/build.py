@@ -68,14 +68,10 @@ def read_data(path):
     for file in path.iterdir():
         if keyword not in str(file):
             continue
-        cnt = 0
         bar = tqdm(open(file, encoding='gbk'))
         bar.set_description(str(file))
         for line in bar:
             yield json.loads(line)
-            cnt += 1
-            if cnt == 10000:
-                break
 
 
 def regularize_relation(relation: dict):
