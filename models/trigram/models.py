@@ -58,14 +58,14 @@ class TrigramModel:
         sql = 'SELECT left, group_concat(right), group_concat(count) FROM relation2 GROUP BY left'
         self.relation2 = {(left, right): count for left, rights, counts in self.connection.execute(sql) for
                           right, count in zip(map(int, rights.split(',')), map(int, counts.split(',')))}
+
         # total_relation_count = sum(self.relation2.values())
         # self.relation_to_likelihood = {key: count / total_relation_count for key, count in self.relation2.items()}
 
         sql = 'SELECT left, middle, group_concat(right), group_concat(count)' \
               ' FROM relation3 WHERE count>%d GROUP BY left, middle' % (self.occurrence_bound,)
-        cursor = self.connection.execute(sql)
-        self.relation3 = {(left, middle): dict(zip(map(int, rights.split(',')), map(int, counts.split(',')))) for
-                          left, middle, rights, counts in cursor.fetchall()}
+        self.relation3 = {(left, mid): {k: count for k, count in zip(map(int, rights.split(',')), map(
+            int, counts.split(','))) } for left, mid, rights, counts in self.connection.execute(sql)}
 
     def initialize(self):
         print('Loading model...')
@@ -92,6 +92,8 @@ class TrigramModel:
                 count_left_mid_right = self.relation3.get((left, mid), {}).get(right, 0)
                 p3 = count_left_mid and count_left_mid_right / count_left_mid
                 p = p_last * (smooth_1 * p1 + smooth_2 * p2 + (1 - smooth_1 - smooth_2) * p3)
+                if p == 0:
+                    continue
                 state[right, mid][left] = p
                 state[right, mid][0] = max(state[right, mid].get(0, 0), p)
         return state

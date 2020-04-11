@@ -1,13 +1,19 @@
-from models import PinyinBinaryModel, NaiveBinaryModel, TrigramModel
+import models
 from utils import exception
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = lambda x: x
 
 
 def main():
-    model = TrigramModel(force_create=False)
+    model = models.TrigramModel(force_create=False)
     result = None
-    correct = 0
+    char_correct = 0
     char_count = 0
-    for line in open('input/test1.txt'):
+    line_correct = 0
+    line_count = 0
+    for line in tqdm(open('input/test2.txt')):
         line = line.strip()
         if not line:
             continue
@@ -18,10 +24,14 @@ def main():
         except exception.StrangePinyinError as e:
             # print('遇到了超出数据库的拼音', e.args[0])
             char_count += len(line)
+            line_count += 1
+            line_correct += result == line
             for a, b in zip(result, line):
-                correct += a == b
+                char_correct += a == b
     if char_count:
-        print(correct, char_count, correct / char_count)
+        print(char_correct, char_count, char_correct / char_count)
+    if line_count:
+        print(line_correct, line_count, line_correct / line_count)
 
 
 if __name__ == '__main__':
