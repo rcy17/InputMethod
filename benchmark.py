@@ -39,7 +39,10 @@ def main(file_in, file_answer, model_class):
         char_count += len(result)
         char_correct += reduce(lambda a, b: a + (b[0] == b[1]), zip(result, ans), 0)
         line_correct += result == ans
-    print(model.smooth_1, model.smooth_2, char_correct / char_count, line_correct / line_count)
+    if model_class == models.TrigramModel:
+        print(model.smooth_1, model.smooth_2, char_correct / char_count, line_correct / line_count)
+    else:
+        print(model.smooth, char_correct / char_count, line_correct / line_count)
 
 
 if __name__ == '__main__':
