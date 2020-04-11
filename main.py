@@ -1,13 +1,13 @@
-from models import PinyinBinaryModel, NaiveBinaryModel
+from models import PinyinBinaryModel, NaiveBinaryModel, TrigramModel
 from utils import exception
 
 
 def main():
-    model = PinyinBinaryModel()
+    model = TrigramModel(force_create=True)
     result = None
     correct = 0
     char_count = 0
-    for line in open('input/test1.txt'):
+    for line in open('input/input.txt'):
         line = line.strip()
         if not line:
             continue
