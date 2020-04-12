@@ -20,7 +20,7 @@ def run_batch():
 def run_batch_binary():
     for i in range(100, 68, -2):
         script = """tmux new-window "
-        export smooth=%.2f;
+        export INPUT_METHOD_SMOOTH=%.2f;
         export USE_BINARY_MODEL=1;
         python benchmark.py > result/%d;
         "
@@ -30,9 +30,9 @@ def run_batch_binary():
 
 def main(file_in, file_answer, model_class):
     model = model_class()
-    inputs = [line.strip() for line in open(file_in) if line.strip()]
+    inputs = open(file_in).read().split('\n')
     results = [model.predict(line) for line in tqdm(inputs)]
-    answers = [line.strip() for line in open(file_answer) if line.strip()]
+    answers = open(file_answer).read().split('\n')
     char_count, char_correct = 0, 0
     line_count, line_correct = len(results), 0
     for result, ans in zip(results, answers):
