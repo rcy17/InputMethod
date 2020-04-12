@@ -4,8 +4,6 @@ from collections import defaultdict
 from datetime import datetime
 from sys import stderr
 
-from utils.exception import *
-from .build import train
 import settings
 
 
@@ -18,6 +16,7 @@ class TrigramModel:
         if not Path(model_path).exists() or force_create:
             try:
                 from sys import stderr
+                from .build import train
                 print('INFO: try to build model', model_path)
                 train('data', model_path)
             except Exception as e:
@@ -71,7 +70,7 @@ class TrigramModel:
                           for left, mid, rights, counts in self.connection.execute(sql)}
 
     def initialize(self):
-        print('Loading model...', file=stderr)
+        print('Loading model, it may cost 20 second...', file=stderr)
         now = datetime.now()
         self._load_charset()
         self._load_relation()

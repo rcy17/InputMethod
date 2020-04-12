@@ -3,8 +3,6 @@ from pathlib import Path
 from collections import defaultdict
 from datetime import datetime
 
-from utils.exception import *
-from .build import train
 import settings
 
 
@@ -16,6 +14,7 @@ class NaiveBinaryModel:
         if not Path(model_path).exists():
             try:
                 from sys import stderr
+                from .build import train
                 print('WARNING: no model file at', model_path, 'and try to build model')
                 train('data', model_path)
             except Exception as e:

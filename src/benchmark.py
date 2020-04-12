@@ -1,6 +1,5 @@
-import models
 import os
-import settings
+from . import settings, models
 from tqdm import tqdm
 from functools import reduce
 

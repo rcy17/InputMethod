@@ -1,5 +1,5 @@
-import models
-from utils import exception
+from . import models
+from .utils import exception
 
 
 def main():

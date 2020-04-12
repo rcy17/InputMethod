@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime
 from bisect import bisect_right
 
-from pypinyin import lazy_pinyin, STYLE_NORMAL, load_single_dict, load_phrases_dict
+from pypinyin import lazy_pinyin, STYLE_NORMAL
 from tqdm import tqdm
 
 import settings

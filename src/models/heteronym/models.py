@@ -4,7 +4,6 @@ from collections import defaultdict
 from datetime import datetime
 from sys import stderr
 
-from utils.exception import *
 from .build import train
 import settings
 
