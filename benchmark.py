@@ -6,8 +6,8 @@ from functools import reduce
 
 
 def run_batch():
-    for i in range(4, 12, 2):
-        for j in range(14, 22, 2):
+    for i in range(3, 7):
+        for j in range(16, 20):
             script = """tmux new-window "
             export INPUT_METHOD_SMOOTH_1=0.%02d;
             export INPUT_METHOD_SMOOTH_2=0.%02d;
@@ -30,9 +30,9 @@ def run_batch_binary():
 
 def main(file_in, file_answer, model_class):
     model = model_class()
-    inputs = open(file_in).read().split('\n')
+    inputs = [line.strip() for line in open(file_in) if line.strip()]
     results = [model.predict(line) for line in tqdm(inputs)]
-    answers = open(file_answer).read().split('\n')
+    answers = [line.strip() for line in open(file_answer) if line.strip()]
     char_count, char_correct = 0, 0
     line_count, line_correct = len(results), 0
     for result, ans in zip(results, answers):
