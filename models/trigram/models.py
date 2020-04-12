@@ -4,8 +4,6 @@ from collections import defaultdict
 from datetime import datetime
 from sys import stderr
 
-from IPython import embed
-
 from utils.exception import *
 from .build import train
 import settings
@@ -22,11 +20,9 @@ class TrigramModel:
                 from sys import stderr
                 print('INFO: try to build model', model_path)
                 train('data', model_path)
-                embed()
             except Exception as e:
                 # Path(model_path).unlink()
                 print(datetime.now(), 'Meet error', type(e), e)
-                embed()
                 raise e
         self.smooth_1 = settings.smooth_1
         self.smooth_2 = settings.smooth_2
@@ -86,15 +82,10 @@ class TrigramModel:
         smooth_2 = self.smooth_2
         state = defaultdict(dict)
         for right in candidates:
+            p1 = self.char_to_likelihood[right]
             for mid, left in last_state:
-                if (left, mid, right) in [
-                    (5236, 2232, 7498),
-                    (5239, 2289, 5880)
-                ]:
-                    left = left
-                p_last = last_state[mid, left][0]
-                p1 = self.char_to_likelihood[right]
                 p2 = self.relation2.get((mid, right), 0) / (self.char_to_count[mid] or 1)
+                p_last = last_state[mid, left][0]
                 count_left_mid = self.relation2.get((left, mid), 0)
                 count_left_mid_right = self.relation3.get((left, mid), {}).get(right, 0)
                 p3 = count_left_mid and count_left_mid_right / count_left_mid

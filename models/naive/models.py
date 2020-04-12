@@ -78,7 +78,7 @@ class NaiveBinaryModel:
                 p_related = self.relation[left].get(right, 0) / self.char_to_count[left]
                 p_char = self.char_to_likelihood[right]
                 state[right][left] = p_last * (smooth * p_related + (1 - smooth) * p_char)
-            state[right][0] = sum(state[right].values())
+            state[right][0] = max(state[right].values())
         return state
 
     def predict(self, pinyin: str):

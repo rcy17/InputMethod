@@ -3,20 +3,20 @@ from utils import exception
 
 
 def main():
-    model = models.TrigramModel(force_create=False)
+    model = models.NaiveBinaryModel()
     result = None
     char_correct = 0
     char_count = 0
     line_correct = 0
     line_count = 0
-    for line in open('input/test1.txt'):
+    for line in open('input/input.txt'):
         line = line.strip()
         if not line:
             continue
         try:
             # print(line, end='')
             result = model.predict(line)
-            # print(result)
+            print(result)
         except exception.StrangePinyinError as e:
             # print('遇到了超出数据库的拼音', e.args[0])
             char_count += len(line)

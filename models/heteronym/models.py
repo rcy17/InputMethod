@@ -4,8 +4,6 @@ from collections import defaultdict
 from datetime import datetime
 from sys import stderr
 
-from IPython import embed
-
 from utils.exception import *
 from .build import train
 import settings
@@ -22,7 +20,6 @@ class PinyinBinaryModel:
                 from sys import stderr
                 print('WARNING: no model file at', model_path, 'and try to build model')
                 train('data', model_path)
-                embed()
             except Exception as e:
                 Path(model_path).unlink()
                 raise e

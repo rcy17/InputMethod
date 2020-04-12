@@ -106,20 +106,6 @@ def insert_result(connection: sqlite3.Connection, record: dict, binary_record: d
     print(stop, 'Finished relation3 insertion in', (stop - start).total_seconds(), 's')
 
 
-def register_pinyin():
-    """
-    register pypinyin for some special character
-    """
-    single_dict = {
-        ord('哪'): 'na'
-    }
-    phrases_dict = {
-        '哪些': [['na'], ['xie']]
-    }
-    load_single_dict(single_dict)
-    load_phrases_dict(phrases_dict)
-
-
 def deal_text(text: str, pinyin_char_table: dict, record: dict, binary_record: dict, ternary_record: dict):
     start = len(pinyin_char_table) + 1
     stop = len(pinyin_char_table) + 2
