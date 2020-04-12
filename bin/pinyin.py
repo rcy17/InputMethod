@@ -1,3 +1,4 @@
+#!/user/bin/python3
 """
 这是拼音输入法的入口文件，应助教要求专程放在bin目录下
 但我不得不指出这种文件结构对Python项目是非常不适合的
@@ -14,9 +15,9 @@ except ImportError:
     def tqdm(iteratable):
         length = iteratable.__len__()
         for current, each in enumerate(iteratable):
-            print('Finished %d / %d' % (current, length), end='', file=sys.stderr)
+            print('\rFinished %d / %d' % (current, length), end='', file=sys.stderr, flush=True)
             yield each
-        print('Finished %d / %d' % (length, length))
+        print('\rFinished %d / %d' % (length, length), file=sys.stderr, flush=True)
 
 os.chdir('../src')
 sys.path.append('.')
